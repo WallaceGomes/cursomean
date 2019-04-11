@@ -1,7 +1,18 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+
+const Post = require('./models/post');
 
 const app = express();
+//senha cluster Qw1sLZ4HCJkgaDJs
+mongoose.connect("mongodb+srv://cursoMean:Qw1sLZ4HCJkgaDJs@cluster0-ly7ll.mongodb.net/node-angular?retryWrites=true")
+.then(() => {
+  console.log('Connected to database!');
+})
+.catch(() =>{
+  console.log('Connection failed!');
+});
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -17,29 +28,31 @@ app.use((req, res, next) => {
 });
 
 app.post("/api/posts",(req, res, next) => {
-  const post = req.body;
-  console.log(post);
-  res.status(201).json({
-    message: 'Post added succesfully'
-  })
+  const post = new Post({
+    title: req.body.title,
+    content: req.body.content
+  });
+  post.save().then(createdPost => { //metodo do mongoose para salvar no banco de dados
+    res.status(201).json({
+      message: 'Post added succesfully',
+      postId: createdPost._id
+  });
 });
 
 app.get("/api/posts" ,(req, res, next) => {
-  const posts = [
-    {
-      id: "fasdasdas",
-      titlle: "First server-side post",
-      content: "This is coming from the server"
-    },
-    {
-      id: "fasdasdas",
-      titlle: "Second server-side post",
-      content: "This is coming from the server"
-    }
-  ];
-  res.status(200).json({
-    message: 'Posts fetched succersfully"',
-    posts: posts
+  Post.find().then(documents =>{
+    res.status(200).json({
+      message: 'Posts fetched succersfully"',
+      posts: documents
+    });
+  });
+});
+
+app.delete("/api/posts/:id", (req, res, next) => {
+  Post.deleteOne({_id: req.params.id}).then(result => {
+    console.log(result);
+  });
+  res.status(200).json({ message: 'Post deleted'});
   });
 });
 
